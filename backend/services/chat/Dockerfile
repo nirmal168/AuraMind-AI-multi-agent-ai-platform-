@@ -1,21 +1,14 @@
-FROM node
+FROM node:20-alpine
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm install --production
 
+COPY . .
 
-COPY ./services/chat/package*.json ./services/chat/
-RUN cd services/chat && npm install
+EXPOSE 5002
 
-COPY services/chat ./services/chat
-COPY shared ./shared
-
-WORKDIR /app/services/chat
-
-EXPOSE 8002
-
-CMD [ "npm","start" ]
+CMD ["npm", "start"]
 
 
