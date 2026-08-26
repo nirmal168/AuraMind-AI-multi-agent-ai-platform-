@@ -1,6 +1,10 @@
 # AuraMind AI Platform — Enterprise Multi-Agent AI Architecture
 
-An enterprise-grade, distributed AI platform built on a Microservices architecture. AuraMind AI features an API Gateway reverse-proxy pattern, Firebase & Redis session authentication, a **LangGraph** multi-agent state graph orchestration engine, automated PDF RAG indexing, PPT generation, code execution artifacts via Monaco Editor, Razorpay billing integration, and full CI/CD deployment to AWS (ECS, ECR, S3, CloudFront).
+> **Author**: **Nirmal Prajapat** ([GitHub @nirmal168](https://github.com/nirmal168))  
+> 🌐 **Live Web App**: [https://aura-mind-ai-multi-agent-ai-platfor-smoky.vercel.app](https://aura-mind-ai-multi-agent-ai-platfor-smoky.vercel.app)  
+> 🚪 **Live API Gateway**: [https://auramind-ai-multi-agent-ai-platform-1.onrender.com](https://auramind-ai-multi-agent-ai-platform-1.onrender.com)  
+
+An enterprise-grade, distributed AI platform built on a Microservices architecture. AuraMind AI features an API Gateway reverse-proxy pattern, Firebase & Upstash Redis session authentication, a **LangGraph** multi-agent state graph orchestration engine, automated PDF RAG indexing, PowerPoint (.pptx) generator, Qwen & FLUX.1 8K image generation studio, code execution artifacts via Monaco Editor, Razorpay billing integration, and full production deployment on Vercel & Render.
 
 ---
 
@@ -672,3 +676,13 @@ AUTH_SERVICE=http://localhost:8001
 | **P1** | **Pinecone / Qdrant Integration** | Uses `MemoryVectorStore` for PDF RAG. | Persistent, production-grade vector index supporting large files. |
 | **P2** | **Message Queue (RabbitMQ)** | Microservices talk via direct HTTP calls. | Decouples inter-service communication and queues long tasks reliably. |
 | **P2** | **Frontend Code-Splitting** | Single 1.33 MB JS bundle. | Lazy loads Monaco Editor to reduce initial JS load by >50%. |
+
+---
+
+## 24. Author & License
+
+Developed and engineered with ❤️ by **Nirmal Prajapat**.
+
+- 💻 **GitHub**: [@nirmal168](https://github.com/nirmal168)
+- 🌐 **Live Web Application**: [AuraMind AI on Vercel](https://aura-mind-ai-multi-agent-ai-platfor-smoky.vercel.app)
+- 📜 **License**: ISC License
