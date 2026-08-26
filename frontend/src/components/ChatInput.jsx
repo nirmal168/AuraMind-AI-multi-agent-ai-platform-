@@ -280,15 +280,22 @@ function ChatInput ({
         finalPayloadPrompt = `${effectivePrompt}\n\nAttached Project Code/Files Content:\n${folderData.text}`
       }
 
-      const formData = new FormData()
-      formData.append('prompt', finalPayloadPrompt)
-      formData.append('conversationId', conversation._id)
-      formData.append('agent', selectedFile?.type === 'application/pdf' ? 'pdfRag' : selectedAgent)
+      let data = null
       if (selectedFile) {
+        const formData = new FormData()
+        formData.append('prompt', finalPayloadPrompt)
+        formData.append('conversationId', conversation._id)
+        formData.append('agent', selectedFile?.type === 'application/pdf' ? 'pdfRag' : selectedAgent)
         formData.append('file', selectedFile)
+        data = await sendMessage(formData)
+      } else {
+        data = await sendMessage({
+          prompt: finalPayloadPrompt,
+          conversationId: conversation._id,
+          agent: selectedAgent
+        })
       }
 
-      const data = await sendMessage(formData)
       setSelectedFile(null)
       setFolderData(null)
 

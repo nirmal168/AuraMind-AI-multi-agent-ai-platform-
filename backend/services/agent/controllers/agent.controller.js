@@ -35,22 +35,38 @@ export const agent = async (req, res,next) => {
       file
     })
 
-    await axios.post(`${process.env.CHAT_SERVICE}/save-message`, {
-      conversationId,
-      role: 'assistant',
-      content: result?.aiResponse,
-      images: result?.images,
-      artifacts: result?.artifacts
-    })
-    await addMessage(conversationId, 'user', prompt)
-    await addMessage(conversationId, 'assistant', result.aiResponse)
+    if (conversationId && result?.aiResponse) {
+      try {
+        await axios.post(`${process.env.CHAT_SERVICE}/save-message`, {
+          conversationId,
+          role: 'assistant',
+          content: result?.aiResponse,
+          images: result?.images,
+          artifacts: result?.artifacts
+        })
+      } catch (err) {
+        console.warn('Save assistant message skipped:', err?.message)
+      }
+
+      try {
+        await addMessage(conversationId, 'user', prompt)
+        await addMessage(conversationId, 'assistant', result.aiResponse)
+      } catch (memErr) {
+        console.warn('Add memory skipped:', memErr?.message)
+      }
+    }
 
     return res.status(200).json({
-      answer: result.aiResponse,
-      images: result.images,
-      artifacts: result.artifacts
+      answer: result?.aiResponse || "I'm here to help!",
+      images: result?.images || [],
+      artifacts: result?.artifacts || []
     })
   } catch (error) {
-    next(error)
+    console.error('Agent execution error:', error)
+    return res.status(200).json({
+      answer: error?.message || "❌ An error occurred while processing your request.",
+      images: [],
+      artifacts: []
+    })
   }
 }
