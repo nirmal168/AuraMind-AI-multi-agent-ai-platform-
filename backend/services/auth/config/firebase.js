@@ -47,7 +47,7 @@ if (!credential) {
   console.warn("⚠️ Warning: Firebase service account not found. Set FIREBASE_SERVICE_ACCOUNT in your .env or place serviceAccountKey.json in the auth service folder.")
 }
 
-export const app = getApps().length === 0 && credential
-  ? initializeApp({ credential })
+export const app = getApps().length === 0
+  ? (credential ? initializeApp({ credential }) : initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID || 'multi-agent-ai-platform-ff9b2' }))
   : (getApps()[0] || null)
 
