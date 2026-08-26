@@ -10,7 +10,7 @@ async function sendMessage (payload) {
     console.log(error)
     console.log(error.response?.status)
     console.log(error.response?.data)
-    return null
+    throw error
   }
 }
 
