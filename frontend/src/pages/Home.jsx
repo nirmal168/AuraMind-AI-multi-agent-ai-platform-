@@ -20,6 +20,9 @@ function Home () {
     try {
       const { data } = await api.post('/api/auth/login', { token })
       console.log('Login success:', data)
+      if (data?.sessionId) {
+        localStorage.setItem('auramind_session_id', data.sessionId)
+      }
       dispatch(setUserData(data))
     } catch (error) {
       console.error('Backend login error:', error)

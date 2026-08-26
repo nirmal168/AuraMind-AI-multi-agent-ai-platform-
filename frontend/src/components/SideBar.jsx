@@ -50,8 +50,9 @@ function SideBar () {
   )
   const { userData } = useSelector(state => state.user)
 
-  const chatConversations = conversations.filter(c => c.type !== 'project')
-  const projectConversations = conversations.filter(c => c.type === 'project')
+  const rawConversations = Array.isArray(conversations) ? conversations.filter(c => c && typeof c === 'object' && c._id) : []
+  const chatConversations = rawConversations.filter(c => c.type !== 'project')
+  const projectConversations = rawConversations.filter(c => c.type === 'project')
 
   // Handle ZIP Archive Import
   const handleZipImport = async (e) => {

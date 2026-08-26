@@ -246,14 +246,19 @@ function ChatInput ({
 
       if (!conversation || !conversation._id) {
         const conv = await createConversation({ title: initialTitle, type: 'chat' })
+        if (!conv || !conv._id) {
+          throw new Error('Please login or refresh to start a new chat.')
+        }
         dispatch(setSelectedConversation(conv))
         dispatch(addConversation(conv))
         conversation = conv
       } else if (conversation?.title === 'New Chat' || conversation?.title === 'New Project') {
-        await updateConversation({
-          id: conversation._id,
-          title: initialTitle
-        })
+        try {
+          await updateConversation({
+            id: conversation._id,
+            title: initialTitle
+          })
+        } catch (e) {}
 
         dispatch(
           setConversationTitle({
