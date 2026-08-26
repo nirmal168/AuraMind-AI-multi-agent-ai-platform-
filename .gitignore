@@ -1,0 +1,59 @@
+# =========================
+# Dependencies
+# =========================
+node_modules/
+**/node_modules/
+
+# =========================
+# Environment & Secret Files
+# =========================
+.env
+.env.*
+!.env.example
+!**/.env.example
+**/.env
+**/.env.*
+serviceAccountKey.json
+**/serviceAccountKey.json
+!serviceAccountKey.json.example
+!**/serviceAccountKey.json.example
+*.pem
+*.key
+
+# =========================
+# Temporary & Log Files
+# =========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.stackdump
+backend/services/agent/temp/
+
+# =========================
+# Build
+# =========================
+dist/
+build/
+coverage/
+**/dist/
+**/build/
+**/coverage/
+
+# =========================
+# Vite
+# =========================
+.vite/
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
