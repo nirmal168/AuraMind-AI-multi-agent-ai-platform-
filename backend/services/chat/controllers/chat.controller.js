@@ -3,7 +3,7 @@ import Message from "../models/message.model.js"
 
 export const createConversation = async (req,res) =>{
     try {
-        const userId = req.headers["x-user-id"]
+        const userId = req.headers["x-user-id"] || req.body?.userId || "user_default"
         const { title, type, projectFiles } = req.body || {}
         const queryType = req.query?.type
         const conversationType = type || queryType || "chat"
@@ -17,8 +17,8 @@ export const createConversation = async (req,res) =>{
         })
         return res.status(200).json(conversation)
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({message:`create conversation error ${error}`})
+        console.error("create conversation error:", error)
+        return res.status(500).json({message:`create conversation error ${error?.message || error}`})
     }
 }
 
