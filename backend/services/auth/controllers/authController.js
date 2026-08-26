@@ -66,7 +66,9 @@ export const login = async (req, res) => {
     await redis.set(
       `session-${sessionId}`,
       JSON.stringify({
+        _id: user._id,
         userId: user._id,
+        sessionId,
         name: user.name,
         email: user.email,
         avatar: user.avatar,
@@ -142,7 +144,9 @@ export const updateUserPayment = async (req, res) => {
     await redis.set(
       `session-${sessionId}`,
       JSON.stringify({
+        _id: user._id,
         userId: user._id,
+        sessionId,
         name: user.name,
         email: user.email,
         avatar: user.avatar,
@@ -193,7 +197,9 @@ export const deductCredit = async (req, res) => {
     await redis.set(
       `session-${sessionId}`,
       JSON.stringify({
+        _id: user._id,
         userId: user._id,
+        sessionId,
         name: user.name,
         email: user.email,
         avatar: user.avatar,

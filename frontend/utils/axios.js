@@ -15,3 +15,19 @@ api.interceptors.request.use((config) => {
     } catch (e) {}
     return config
 })
+
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (
+            error.response?.status === 401 ||
+            (error.response?.status === 400 && error.response?.data?.message?.toLowerCase().includes('session'))
+        ) {
+            try {
+                localStorage.removeItem('auramind_session_id')
+                window.location.href = '/'
+            } catch (e) {}
+        }
+        return Promise.reject(error)
+    }
+)

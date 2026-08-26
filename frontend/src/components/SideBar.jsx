@@ -179,7 +179,7 @@ function SideBar () {
       dispatch(setConversations(data))
     }
     getConv()
-  }, [userData?._id, dispatch])
+  }, [userData?._id, userData?.userId, dispatch])
 
   useEffect(() => {
     const handleToggleMobile = () => setMobileOpen(prev => !prev)
