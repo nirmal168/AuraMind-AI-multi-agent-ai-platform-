@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
+import { signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged } from 'firebase/auth'
 
 import { FcGoogle } from 'react-icons/fc'
 import { auth, googleProvider } from '../../utils/firebase'
@@ -42,41 +42,58 @@ function Home () {
     }
   }
 
-  // Pre-warm backend and handle redirect result on component mount
+  // Pre-warm backend and listen for auth state changes / redirect results
   useEffect(() => {
     // Silently pre-warm the backend gateway on Render
     api.get('/').catch(() => {})
 
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth)
-        if (result) {
+    // 1. Check redirect result (if returning from redirect)
+    getRedirectResult(auth)
+      .then(async result => {
+        if (result?.user) {
           const token = await result.user.getIdToken()
           await handleLogin(token)
         }
-      } catch (error) {
-        console.error('Redirect sign-in error:', error)
-        setErrorMessage(error.message || 'Failed to sign in with Google.')
+      })
+      .catch(err => {
+        console.error('Redirect result error:', err)
+      })
+
+    // 2. Listen to Firebase auth state directly (handles mobile IndexedDB session restoration)
+    const unsubscribe = onAuthStateChanged(auth, async user => {
+      if (user && !userData) {
+        try {
+          const token = await user.getIdToken()
+          await handleLogin(token)
+        } catch (err) {
+          console.error('Auth state token error:', err)
+        }
       }
-    }
-    handleRedirectResult()
-  }, [])
+    })
+
+    return () => unsubscribe()
+  }, [userData])
 
   const googleLogin = async () => {
     setErrorMessage('')
     setLoading(true)
     try {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-      if (isMobile) {
-        await signInWithRedirect(auth, googleProvider)
-      } else {
-        const data = await signInWithPopup(auth, googleProvider)
-        const token = await data.user.getIdToken()
-        await handleLogin(token)
-      }
+      // Try popup first on all devices (works reliably without 3rd-party cookie issues)
+      const data = await signInWithPopup(auth, googleProvider)
+      const token = await data.user.getIdToken()
+      await handleLogin(token)
     } catch (error) {
       console.error('Google Sign-In Error:', error)
-      if (error.code === 'auth/popup-closed-by-user') {
+      // If mobile browser blocked popup, fall back to redirect
+      if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+        try {
+          await signInWithRedirect(auth, googleProvider)
+          return
+        } catch (redirectErr) {
+          console.error('Redirect fallback error:', redirectErr)
+          setErrorMessage('Sign-in was blocked by browser. Please allow popups or cookies.')
+        }
+      } else if (error.code === 'auth/popup-closed-by-user') {
         setErrorMessage('Sign-in popup was closed before completing.')
       } else if (error.code === 'auth/unauthorized-domain') {
         setErrorMessage('This domain is not authorized in Firebase Console (Authentication > Settings > Authorized domains).')
