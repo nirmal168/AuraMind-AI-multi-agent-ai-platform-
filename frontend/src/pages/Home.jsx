@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { signInWithPopup } from 'firebase/auth'
+import { useState, useEffect } from 'react'
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
 
 import { FcGoogle } from 'react-icons/fc'
 import { auth, googleProvider } from '../../utils/firebase'
@@ -16,28 +16,64 @@ function Home () {
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const handleLogin = async token => {
+  const handleLogin = async (token, retries = 2) => {
     try {
+      setLoading(true)
       const { data } = await api.post('/api/auth/login', { token })
       console.log('Login success:', data)
       if (data?.sessionId) {
         localStorage.setItem('auramind_session_id', data.sessionId)
       }
       dispatch(setUserData(data))
+      setErrorMessage('')
     } catch (error) {
       console.error('Backend login error:', error)
+      const status = error.response?.status
+      if (retries > 0 && (status === 502 || status === 504 || !error.response)) {
+        setErrorMessage('Cloud servers are warming up from standby (Render free tier). Retrying in 4 seconds...')
+        setTimeout(() => {
+          handleLogin(token, retries - 1)
+        }, 4000)
+        return
+      }
       const serverMsg = error.response?.data?.message || error.message || 'Failed to connect to backend server'
       setErrorMessage(`Backend error: ${serverMsg}`)
+      setLoading(false)
     }
   }
+
+  // Pre-warm backend and handle redirect result on component mount
+  useEffect(() => {
+    // Silently pre-warm the backend gateway on Render
+    api.get('/').catch(() => {})
+
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth)
+        if (result) {
+          const token = await result.user.getIdToken()
+          await handleLogin(token)
+        }
+      } catch (error) {
+        console.error('Redirect sign-in error:', error)
+        setErrorMessage(error.message || 'Failed to sign in with Google.')
+      }
+    }
+    handleRedirectResult()
+  }, [])
 
   const googleLogin = async () => {
     setErrorMessage('')
     setLoading(true)
     try {
-      const data = await signInWithPopup(auth, googleProvider)
-      const token = await data.user.getIdToken()
-      await handleLogin(token)
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (isMobile) {
+        await signInWithRedirect(auth, googleProvider)
+      } else {
+        const data = await signInWithPopup(auth, googleProvider)
+        const token = await data.user.getIdToken()
+        await handleLogin(token)
+      }
     } catch (error) {
       console.error('Google Sign-In Error:', error)
       if (error.code === 'auth/popup-closed-by-user') {

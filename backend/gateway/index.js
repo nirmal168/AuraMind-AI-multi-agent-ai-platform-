@@ -25,6 +25,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
 const authProxy = proxy(process.env.AUTH_SERVICE || "http://localhost:5001", {
+  timeout: 120000,
   userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
     const cookies = proxyRes.headers["set-cookie"]
     if (cookies) {

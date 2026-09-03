@@ -1,7 +1,14 @@
 import axios from "axios"
 
+// In production (Vercel), use VITE_SERVER_URL or fall back to the live Render gateway.
+// In local dev, Vite proxy handles /api calls so baseURL can be empty (relative path).
+const baseURL =
+  import.meta.env.VITE_SERVER_URL ||
+  import.meta.env.VITE_SEVER_URL ||
+  (import.meta.env.DEV ? "" : "https://auramind-ai-multi-agent-ai-platform-1.onrender.com")
+
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_SERVER_URL || import.meta.env.VITE_SEVER_URL || "http://localhost:5000",
+    baseURL,
     withCredentials: true
 })
 
@@ -25,7 +32,6 @@ api.interceptors.response.use(
         ) {
             try {
                 localStorage.removeItem('auramind_session_id')
-                window.location.href = '/'
             } catch (e) {}
         }
         return Promise.reject(error)

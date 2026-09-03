@@ -2,6 +2,7 @@ import proxy from 'express-http-proxy'
 
 export const proxyWithHeader = serviceUrl => {
   return proxy(serviceUrl, {
+    timeout: 120000,
     proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
       const uid = srcReq.user?.userId || srcReq.user?._id || srcReq.user?.id
       if (uid) {
