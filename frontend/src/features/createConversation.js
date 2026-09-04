@@ -12,6 +12,11 @@ export const createConversation = async (payload = {}, retries = 2) => {
       await new Promise(res => setTimeout(res, 2500))
       return createConversation(payload, retries - 1)
     }
+    if (retries > 0 && status === 429) {
+      console.warn("Rate limited on chat creation, waiting 3s before retry...")
+      await new Promise(res => setTimeout(res, 3000))
+      return createConversation(payload, retries - 1)
+    }
     return null
   }
 }

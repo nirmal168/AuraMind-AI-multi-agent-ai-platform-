@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged } from 'firebase/auth'
 
 import { FcGoogle } from 'react-icons/fc'
@@ -15,8 +15,11 @@ function Home () {
   const { userData } = useSelector(state => state.user)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const isLoggingInRef = useRef(false)
 
   const handleLogin = async (token, retries = 2) => {
+    if (isLoggingInRef.current) return
+    isLoggingInRef.current = true
     try {
       setLoading(true)
       const { data } = await api.post('/api/auth/login', { token })
@@ -29,20 +32,27 @@ function Home () {
     } catch (error) {
       console.error('Backend login error:', error)
       const status = error.response?.status
+      if (status === 429) {
+        setErrorMessage('Too many requests. Please wait a few seconds and try again.')
+        return
+      }
       if (retries > 0 && (status === 502 || status === 504 || !error.response)) {
         setErrorMessage('Cloud servers are warming up from standby (Render free tier). Retrying in 4 seconds...')
         setTimeout(() => {
+          isLoggingInRef.current = false
           handleLogin(token, retries - 1)
         }, 4000)
         return
       }
       const serverMsg = error.response?.data?.message || error.message || 'Failed to connect to backend server'
       setErrorMessage(`Backend error: ${serverMsg}`)
+    } finally {
+      isLoggingInRef.current = false
       setLoading(false)
     }
   }
 
-  // Pre-warm backend and listen for auth state changes / redirect results
+  // Pre-warm backend and listen for auth state changes on mount only
   useEffect(() => {
     // Silently pre-warm the backend gateway on Render
     api.get('/').catch(() => {})
@@ -50,7 +60,7 @@ function Home () {
     // 1. Check redirect result (if returning from redirect)
     getRedirectResult(auth)
       .then(async result => {
-        if (result?.user) {
+        if (result?.user && !isLoggingInRef.current) {
           const token = await result.user.getIdToken()
           await handleLogin(token)
         }
@@ -59,9 +69,9 @@ function Home () {
         console.error('Redirect result error:', err)
       })
 
-    // 2. Listen to Firebase auth state directly (handles mobile IndexedDB session restoration)
+    // 2. Listen to Firebase auth state directly on mount
     const unsubscribe = onAuthStateChanged(auth, async user => {
-      if (user && !userData) {
+      if (user && !isLoggingInRef.current && !localStorage.getItem('auramind_session_id')) {
         try {
           const token = await user.getIdToken()
           await handleLogin(token)
@@ -72,9 +82,10 @@ function Home () {
     })
 
     return () => unsubscribe()
-  }, [userData])
+  }, [])
 
   const googleLogin = async () => {
+    if (loading || isLoggingInRef.current) return
     setErrorMessage('')
     setLoading(true)
     try {

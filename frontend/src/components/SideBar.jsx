@@ -41,6 +41,7 @@ function SideBar () {
   const [showBilling, setShowBilling] = useState(false)
   const [activeTab, setActiveTab] = useState('chats') // 'chats' | 'projects'
   const [deletingId, setDeletingId] = useState(null)
+  const [isCreating, setIsCreating] = useState(false)
   const sidebarFolderInputRef = useRef(null)
   const sidebarZipInputRef = useRef(null)
 
@@ -188,34 +189,46 @@ function SideBar () {
   }, [])
 
   const handleCreateChat = async () => {
-    const data = await createConversation({ title: 'New Chat', type: 'chat' })
-    if (data) {
-      dispatch(addConversation(data))
-      dispatch(setSelectedConversation(data))
-      dispatch(setMessages([]))
-      dispatch(setArtifacts([]))
-      setActiveTab('chats')
+    if (isCreating) return
+    setIsCreating(true)
+    try {
+      const data = await createConversation({ title: 'New Chat', type: 'chat' })
+      if (data) {
+        dispatch(addConversation(data))
+        dispatch(setSelectedConversation(data))
+        dispatch(setMessages([]))
+        dispatch(setArtifacts([]))
+        setActiveTab('chats')
+      }
+    } finally {
+      setIsCreating(false)
     }
   }
 
   const handleCreateProject = async () => {
-    const data = await createConversation({ title: 'New Project', type: 'project' })
-    if (data) {
-      dispatch(addConversation(data))
-      dispatch(setSelectedConversation(data))
-      dispatch(setMessages([]))
-      dispatch(
-        importProject({
-          title: 'New Project',
-          files: [
-            {
-              name: 'index.html',
-              content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>New Project</title>\n</head>\n<body>\n  <h1>Welcome to AuraMind AI Code Studio</h1>\n</body>\n</html>'
-            }
-          ]
-        })
-      )
-      setActiveTab('projects')
+    if (isCreating) return
+    setIsCreating(true)
+    try {
+      const data = await createConversation({ title: 'New Project', type: 'project' })
+      if (data) {
+        dispatch(addConversation(data))
+        dispatch(setSelectedConversation(data))
+        dispatch(setMessages([]))
+        dispatch(
+          importProject({
+            title: 'New Project',
+            files: [
+              {
+                name: 'index.html',
+                content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>New Project</title>\n</head>\n<body>\n  <h1>Welcome to AuraMind AI Code Studio</h1>\n</body>\n</html>'
+              }
+            ]
+          })
+        )
+        setActiveTab('projects')
+      }
+    } finally {
+      setIsCreating(false)
     }
   }
 
@@ -333,18 +346,20 @@ function SideBar () {
             {activeTab === 'chats' ? (
               <button
                 onClick={handleCreateChat}
-                className='w-full flex items-center justify-center gap-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 rounded-xl py-[10px] border-none cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all duration-150 shadow-lg shadow-indigo-500/20'
+                disabled={isCreating}
+                className='w-full flex items-center justify-center gap-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 rounded-xl py-[10px] border-none cursor-pointer hover:opacity-95 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 shadow-lg shadow-indigo-500/20'
               >
-                <Plus size={16} />
-                New Chat
+                <Plus size={16} className={isCreating ? 'animate-spin' : ''} />
+                {isCreating ? 'Creating...' : 'New Chat'}
               </button>
             ) : (
               <button
                 onClick={handleCreateProject}
-                className='w-full flex items-center justify-center gap-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-xl py-[10px] border-none cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all duration-150 shadow-lg shadow-purple-500/20'
+                disabled={isCreating}
+                className='w-full flex items-center justify-center gap-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-xl py-[10px] border-none cursor-pointer hover:opacity-95 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 shadow-lg shadow-purple-500/20'
               >
-                <Plus size={16} />
-                New Project
+                <Plus size={16} className={isCreating ? 'animate-spin' : ''} />
+                {isCreating ? 'Creating...' : 'New Project'}
               </button>
             )}
           </div>
