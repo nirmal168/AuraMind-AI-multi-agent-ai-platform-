@@ -59,4 +59,21 @@ app.get("/api/me",protect,getCurrentUser)
 
 app.listen(port,()=>{
     console.log(`gateway started at ${port}`)
+
+    // Permanent 24/7 keep-alive heartbeat: Pings all microservices every 9 minutes to prevent Render free-tier sleep
+    const PING_INTERVAL = 9 * 60 * 1000;
+    const servicesToPing = [
+      process.env.AUTH_SERVICE,
+      process.env.CHAT_SERVICE,
+      process.env.AGENT_SERVICE,
+      "https://auramind-ai-multi-agent-ai-platform-1.onrender.com"
+    ].filter(Boolean);
+
+    setInterval(async () => {
+      for (const service of servicesToPing) {
+        try {
+          fetch(service).catch(() => {});
+        } catch (e) {}
+      }
+    }, PING_INTERVAL);
 })

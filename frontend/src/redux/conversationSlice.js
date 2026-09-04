@@ -1,24 +1,48 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const getInitialConversations = () => {
+  try {
+    const cached = localStorage.getItem('auramind_cached_conversations')
+    const parsed = cached ? JSON.parse(cached) : []
+    return Array.isArray(parsed) ? parsed.filter(c => c && typeof c === 'object' && c._id) : []
+  } catch (e) {
+    return []
+  }
+}
+
+const initialList = getInitialConversations()
+
 const conversationSlice = createSlice({
   name: "conversation",
   initialState: {
-    conversations: [],
-    selectedConversation: null,
+    conversations: initialList,
+    selectedConversation: initialList.length > 0 ? initialList[0] : null,
   },
   reducers: {
     setConversations: (state, action) => {
-      state.conversations = Array.isArray(action.payload)
+      const incoming = Array.isArray(action.payload)
         ? action.payload.filter(c => c && typeof c === 'object' && c._id)
         : [];
+      if (incoming.length > 0) {
+        state.conversations = incoming;
+        try {
+          localStorage.setItem('auramind_cached_conversations', JSON.stringify(incoming));
+        } catch (e) {}
+      } else if (state.conversations.length === 0) {
+        state.conversations = [];
+      }
     },
 
     addConversation: (state, action) => {
       if (action.payload && action.payload._id) {
-        state.conversations = [
+        const updated = [
           action.payload,
           ...state.conversations.filter(c => c && c._id && c._id !== action.payload._id)
         ];
+        state.conversations = updated;
+        try {
+          localStorage.setItem('auramind_cached_conversations', JSON.stringify(updated));
+        } catch (e) {}
       }
     },
 
@@ -34,9 +58,13 @@ const conversationSlice = createSlice({
       const { conversationsId, title } = action.payload || {};
       if (!conversationsId) return;
 
-      state.conversations = state.conversations
+      const updated = state.conversations
         .filter(c => c && c._id)
         .map((conv) => (conv._id === conversationsId ? { ...conv, title } : conv));
+      state.conversations = updated;
+      try {
+        localStorage.setItem('auramind_cached_conversations', JSON.stringify(updated));
+      } catch (e) {}
 
       if (state.selectedConversation?._id === conversationsId) {
         state.selectedConversation = {
@@ -48,11 +76,15 @@ const conversationSlice = createSlice({
 
     removeConversation: (state, action) => {
       const conversationId = action.payload;
-      state.conversations = state.conversations.filter(
+      const updated = state.conversations.filter(
         (conv) => conv && conv._id && conv._id !== conversationId
       );
+      state.conversations = updated;
+      try {
+        localStorage.setItem('auramind_cached_conversations', JSON.stringify(updated));
+      } catch (e) {}
       if (state.selectedConversation?._id === conversationId) {
-        state.selectedConversation = state.conversations[0] || null;
+        state.selectedConversation = updated[0] || null;
       }
     },
   },
