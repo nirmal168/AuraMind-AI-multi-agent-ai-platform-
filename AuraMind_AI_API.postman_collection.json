@@ -110,30 +110,6 @@
             }
           },
           "response": []
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "x-session-id",
-                "value": "{{sessionId}}",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{sessionId}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "logout"]
-            }
-          },
-          "response": []
         }
       ]
     },
@@ -469,6 +445,35 @@
               "protocol": "https",
               "host": ["auramind-agent", "onrender", "com"],
               "path": [""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Cleanup & Logout",
+      "item": [
+        {
+          "name": "Logout (Invalidate Session)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
             }
           },
           "response": []
