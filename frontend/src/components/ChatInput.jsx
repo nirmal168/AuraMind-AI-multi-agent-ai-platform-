@@ -313,13 +313,14 @@ function ChatInput ({
       )
     } catch (error) {
       console.error(error)
-      const isSlowStartup = error.response?.status === 502 || error.response?.status === 504 || String(error.message || '').includes('502') || String(error.message || '').includes('504')
+      const status = error.response?.status
+      const isSlowStartup = status === 429 || status === 502 || status === 504 || !error.response || String(error.message || '').includes('429') || String(error.message || '').includes('502')
       dispatch(
         addMessage({
           role: 'assistant',
           content: isSlowStartup
-            ? '🚀 The AI agent service is waking up from standby (Render free tier sleep). Please try sending your message again in a few seconds!'
-            : 'Something went wrong. Please try again.'
+            ? '🚀 The AI agent service is warming up from standby (Render free tier). Please wait a few seconds and send your message again!'
+            : (error.response?.data?.message || 'Something went wrong. Please try again.')
         })
       )
     } finally {
