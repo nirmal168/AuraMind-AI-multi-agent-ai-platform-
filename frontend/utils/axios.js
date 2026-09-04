@@ -32,6 +32,7 @@ api.interceptors.response.use(
         ) {
             try {
                 localStorage.removeItem('auramind_session_id')
+                window.dispatchEvent(new CustomEvent('session-expired'))
             } catch (e) {}
         }
         return Promise.reject(error)

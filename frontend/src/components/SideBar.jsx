@@ -17,7 +17,8 @@ import {
   Trash2,
   Check,
   FolderArchive,
-  Folder
+  Folder,
+  RotateCw
 } from 'lucide-react'
 import { getConversations } from '../features/getConversations'
 import { useDispatch, useSelector } from 'react-redux'
@@ -174,12 +175,32 @@ function SideBar () {
     }
   }
 
+  const reloadConversations = async () => {
+    const data = await getConversations()
+    if (Array.isArray(data)) {
+      dispatch(setConversations(data))
+    }
+  }
+
   useEffect(() => {
+    let timer
     const getConv = async () => {
       const data = await getConversations()
       dispatch(setConversations(data))
+      // If initial fetch was empty and user is logged in, retry once after 3.5s in case Render was waking up
+      if ((!data || data.length === 0) && (userData?._id || userData?.userId)) {
+        timer = setTimeout(async () => {
+          const retryData = await getConversations()
+          if (Array.isArray(retryData) && retryData.length > 0) {
+            dispatch(setConversations(retryData))
+          }
+        }, 3500)
+      }
     }
     getConv()
+    return () => {
+      if (timer) clearTimeout(timer)
+    }
   }, [userData?._id, userData?.userId, dispatch])
 
   useEffect(() => {
@@ -393,10 +414,20 @@ function SideBar () {
             </button>
           </div>
 
-          <div className='px-5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500'>
-            {activeTab === 'chats'
-              ? (chatConversations.length === 0 ? 'No Recent Chats' : 'Recent Chats')
-              : 'Saved Projects'}
+          <div className='px-5 pt-3 pb-1 flex items-center justify-between text-[10px] font-semibold uppercase tracking-widest text-slate-500'>
+            <span>
+              {activeTab === 'chats'
+                ? (chatConversations.length === 0 ? 'No Recent Chats' : 'Recent Chats')
+                : 'Saved Projects'}
+            </span>
+            <button
+              type='button'
+              onClick={reloadConversations}
+              className='text-slate-500 hover:text-slate-300 transition-colors bg-transparent border-none cursor-pointer p-0.5'
+              title='Refresh Chats'
+            >
+              <RotateCw size={11} />
+            </button>
           </div>
 
           {activeTab === 'chats' ? (
@@ -410,6 +441,14 @@ function SideBar () {
                   <p className='text-[11px] text-slate-500'>
                     Start a conversation with AuraMind AI.
                   </p>
+                  <button
+                    type='button'
+                    onClick={handleCreateChat}
+                    disabled={isCreating}
+                    className='mt-2 px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-xs font-medium text-indigo-200 transition-all cursor-pointer'
+                  >
+                    + New Chat
+                  </button>
                 </div>
               ) : (
                 chatConversations.map((conv, i) => {

@@ -82,6 +82,17 @@ function Home () {
       })
   }, [])
 
+  // Handle session expired event from axios interceptor
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      console.warn("Session expired event received, prompting re-login")
+      dispatch(setUserData(null))
+      localStorage.removeItem('auramind_session_id')
+    }
+    window.addEventListener('session-expired', handleSessionExpired)
+    return () => window.removeEventListener('session-expired', handleSessionExpired)
+  }, [dispatch])
+
   const googleLogin = async () => {
     if (loading || isLoggingInRef.current) return
     setErrorMessage('')
