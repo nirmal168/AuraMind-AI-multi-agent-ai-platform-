@@ -15,10 +15,25 @@ function Home () {
   const { userData } = useSelector(state => state.user)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [cooldown, setCooldown] = useState(0)
   const isLoggingInRef = useRef(false)
 
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = setInterval(() => {
+      setCooldown(prev => {
+        if (prev <= 1) {
+          setErrorMessage('')
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [cooldown])
+
   const handleLogin = async (token, retries = 2) => {
-    if (isLoggingInRef.current) return
+    if (isLoggingInRef.current || cooldown > 0) return
     isLoggingInRef.current = true
     try {
       setLoading(true)
@@ -33,7 +48,8 @@ function Home () {
       console.error('Backend login error:', error)
       const status = error.response?.status
       if (status === 429) {
-        setErrorMessage('Too many requests. Please wait a few seconds and try again.')
+        setCooldown(15)
+        setErrorMessage('Cloudflare server rate limit active. Please wait 15 seconds for cooldown...')
         return
       }
       if (retries > 0 && (status === 502 || status === 504 || !error.response)) {
@@ -148,7 +164,7 @@ function Home () {
 
             <button
               onClick={googleLogin}
-              disabled={loading}
+              disabled={loading || cooldown > 0}
               className='w-full flex items-center justify-center gap-3 py-[11px] rounded-xl text-sm font-medium text-black/90 bg-white hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer'
             >
               {loading ? (
@@ -156,7 +172,11 @@ function Home () {
               ) : (
                 <FcGoogle size={15} />
               )}
-              {loading ? 'Signing in...' : 'Continue With Google'}
+              {loading
+                ? 'Signing in...'
+                : cooldown > 0
+                ? `Please wait ${cooldown}s...`
+                : 'Continue With Google'}
             </button>
           </div>
         </div>
