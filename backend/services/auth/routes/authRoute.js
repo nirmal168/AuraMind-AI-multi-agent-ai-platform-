@@ -5,6 +5,7 @@ const router = express.Router()
 
 router.post("/login",login)
 router.get("/logout",logOut)
+router.post("/logout",logOut)
 router.post("/update-plan",updateUserPayment)
 router.post("/deduct-credits",deductCredit)
 export default router;
