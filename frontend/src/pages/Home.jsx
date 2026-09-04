@@ -48,8 +48,8 @@ function Home () {
       console.error('Backend login error:', error)
       const status = error.response?.status
       if (status === 429) {
-        setCooldown(15)
-        setErrorMessage('Cloudflare server rate limit active. Please wait 15 seconds for cooldown...')
+        setCooldown(45)
+        setErrorMessage('Cloudflare server rate limit active. Please wait for the cooldown timer below...')
         return
       }
       if (retries > 0 && (status === 502 || status === 504 || !error.response)) {
@@ -68,9 +68,8 @@ function Home () {
     }
   }
 
-  // Listen for auth state changes on mount only
+  // Handle redirect result on mount only (when returning from Google redirect)
   useEffect(() => {
-    // 1. Check redirect result (if returning from redirect)
     getRedirectResult(auth)
       .then(async result => {
         if (result?.user && !isLoggingInRef.current) {
@@ -81,20 +80,6 @@ function Home () {
       .catch(err => {
         console.error('Redirect result error:', err)
       })
-
-    // 2. Listen to Firebase auth state directly on mount
-    const unsubscribe = onAuthStateChanged(auth, async user => {
-      if (user && !isLoggingInRef.current && !localStorage.getItem('auramind_session_id')) {
-        try {
-          const token = await user.getIdToken()
-          await handleLogin(token)
-        } catch (err) {
-          console.error('Auth state token error:', err)
-        }
-      }
-    })
-
-    return () => unsubscribe()
   }, [])
 
   const googleLogin = async () => {
