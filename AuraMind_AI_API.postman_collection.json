@@ -1,0 +1,479 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+    "name": "AuraMind AI - Multi-Agent AI Platform",
+    "description": "Complete API collection for AuraMind AI Multi-Agent Platform covering Gateway, Authentication, Chat & Conversation Management, and AI Agents (Chat, Coding, PDF, PPT, Vision).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://auramind-ai-multi-agent-ai-platform-1.onrender.com",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conversationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "firebaseToken",
+      "value": "PASTE_YOUR_FIREBASE_ID_TOKEN_HERE",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Gateway & System",
+      "item": [
+        {
+          "name": "Gateway Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User Profile (/api/me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "me"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "Login with Firebase Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.sessionId) {",
+                  "    pm.collectionVariables.set('sessionId', jsonData.sessionId);",
+                  "    pm.environment.set('sessionId', jsonData.sessionId);",
+                  "    console.log('Saved sessionId:', jsonData.sessionId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{firebaseToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Chat & Conversations",
+      "item": [
+        {
+          "name": "Create Conversation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData._id) {",
+                  "    pm.collectionVariables.set('conversationId', jsonData._id);",
+                  "    pm.environment.set('conversationId', jsonData._id);",
+                  "    console.log('Saved conversationId:', jsonData._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Test Chat\",\n  \"type\": \"chat\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/create-conversation",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "create-conversation"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/get-conversations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "get-conversations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Conversation Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/get-messages/{{conversationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "get-messages", "{{conversationId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Save Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"role\": \"user\",\n  \"content\": \"Hello from Postman!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/save-message",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "save-message"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Conversation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/delete-conversation/{{conversationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "delete-conversation", "{{conversationId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. AI Agents",
+      "item": [
+        {
+          "name": "Chat Agent Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Explain quantum computing in simple terms\",\n  \"agent\": \"chat\",\n  \"conversationId\": \"{{conversationId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agent/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agent", "chat"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Coding Agent Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Write a responsive HTML/CSS navbar with a modern dark theme\",\n  \"agent\": \"coding\",\n  \"conversationId\": \"{{conversationId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agent/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agent", "chat"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PPT Agent Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-session-id",
+                "value": "{{sessionId}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sessionId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Create a 5 slide presentation on artificial intelligence trends\",\n  \"agent\": \"ppt\",\n  \"conversationId\": \"{{conversationId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agent/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agent", "chat"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Download Artifact (PPTX/PDF)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/agent/download/:filename",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agent", "download", ":filename"],
+              "variable": [
+                {
+                  "key": "filename",
+                  "value": "Presentation-sample.pptx"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Direct Microservice Health",
+      "item": [
+        {
+          "name": "Gateway Service Direct",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://auramind-ai-multi-agent-ai-platform-1.onrender.com/",
+              "protocol": "https",
+              "host": ["auramind-ai-multi-agent-ai-platform-1", "onrender", "com"],
+              "path": [""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth Service Direct",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://auramind-auth.onrender.com/",
+              "protocol": "https",
+              "host": ["auramind-auth", "onrender", "com"],
+              "path": [""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chat Service Direct",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://auramind-chat.onrender.com/",
+              "protocol": "https",
+              "host": ["auramind-chat", "onrender", "com"],
+              "path": [""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Agent Service Direct",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://auramind-agent.onrender.com/",
+              "protocol": "https",
+              "host": ["auramind-agent", "onrender", "com"],
+              "path": [""]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
