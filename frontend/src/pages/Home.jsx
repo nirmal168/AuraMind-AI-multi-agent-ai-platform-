@@ -47,17 +47,18 @@ function Home () {
     } catch (error) {
       console.error('Backend login error:', error)
       const status = error.response?.status
-      if (status === 429) {
-        setCooldown(45)
-        setErrorMessage('Cloudflare server rate limit active. Please wait for the cooldown timer below...')
-        return
-      }
-      if (retries > 0 && (status === 502 || status === 504 || !error.response)) {
-        setErrorMessage('Cloud servers are warming up from standby (Render free tier). Retrying in 4 seconds...')
+      if (retries > 0 && (status === 429 || status === 500 || status === 502 || status === 503 || status === 504 || !error.response)) {
+        const delay = status === 429 ? 3500 : 4000
+        setErrorMessage('Cloud database is waking up from standby. Connecting automatically...')
         setTimeout(() => {
           isLoggingInRef.current = false
           handleLogin(token, retries - 1)
-        }, 4000)
+        }, delay)
+        return
+      }
+      if (status === 429) {
+        setCooldown(15)
+        setErrorMessage('Server connection busy. Please wait a moment...')
         return
       }
       const serverMsg = error.response?.data?.message || error.message || 'Failed to connect to backend server'

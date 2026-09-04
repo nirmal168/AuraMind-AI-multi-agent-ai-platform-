@@ -1,0 +1,20 @@
+﻿name: 24/7 Render Keep-Alive Heartbeat
+
+on:
+  schedule:
+    # Run every 10 minutes to prevent Render free-tier containers from hibernating
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-services:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping All AuraMind Microservices
+        run: |
+          echo "Pinging AuraMind Gateway and Microservices to keep warm..."
+          curl -s -m 30 -o /dev/null -w "Gateway: %{http_code}\n" https://auramind-ai-multi-agent-ai-platform-1.onrender.com/ || true
+          curl -s -m 30 -o /dev/null -w "Chat Service: %{http_code}\n" https://auramind-chat.onrender.com/ || true
+          curl -s -m 30 -o /dev/null -w "Auth Service: %{http_code}\n" https://auramind-auth.onrender.com/ || true
+          curl -s -m 30 -o /dev/null -w "Agent Service: %{http_code}\n" https://auramind-agent.onrender.com/ || true
+          echo "All services successfully pinged."

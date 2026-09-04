@@ -25,6 +25,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import {
   addConversation,
   setConversations,
+  clearConversations,
   setSelectedConversation,
   removeConversation
 } from '../redux/conversationSlice'
@@ -717,6 +718,13 @@ function SideBar () {
                     onClick={() => {
                       logOut()
                       dispatch(setUserData(null))
+                      dispatch(clearConversations())
+                      try {
+                        localStorage.removeItem('auramind_session_id')
+                        localStorage.removeItem('auramind_cached_user')
+                        localStorage.removeItem('auramind_cached_conversations')
+                        localStorage.removeItem('auramind_cached_selected_conversation')
+                      } catch (e) {}
                     }}
                     className='flex items-center justify-center w-7 h-7 rounded-[7px] border-none bg-transparent text-slate-400 cursor-pointer hover:bg-white/[0.08] hover:text-slate-200 transition-all duration-150'
                     title='Log Out'

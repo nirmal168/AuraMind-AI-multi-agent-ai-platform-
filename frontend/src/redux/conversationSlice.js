@@ -28,9 +28,17 @@ const conversationSlice = createSlice({
         try {
           localStorage.setItem('auramind_cached_conversations', JSON.stringify(incoming));
         } catch (e) {}
-      } else if (state.conversations.length === 0) {
-        state.conversations = [];
       }
+      // Retain existing conversations if incoming is empty (e.g. cold start/network glitch)
+    },
+
+    clearConversations: (state) => {
+      state.conversations = [];
+      state.selectedConversation = null;
+      try {
+        localStorage.removeItem('auramind_cached_conversations');
+        localStorage.removeItem('auramind_cached_selected_conversation');
+      } catch (e) {}
     },
 
     addConversation: (state, action) => {
@@ -92,6 +100,7 @@ const conversationSlice = createSlice({
 
 export const {
   setConversations,
+  clearConversations,
   addConversation,
   setSelectedConversation,
   setConversationTitle,
