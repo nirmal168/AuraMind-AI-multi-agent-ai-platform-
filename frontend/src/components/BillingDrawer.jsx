@@ -93,7 +93,7 @@ export default function BillingDrawer ({ open, onClose }) {
                   <div className='flex justify-between text-xs text-slate-400 mb-2'>
                     <span>Credits</span>
                     <span>
-                      {userData.credits || 0}/{userData.totalCredits || 100}
+                      {userData?.credits ?? 0}/{userData?.totalCredits ?? 100}
                     </span>
                   </div>
 
