@@ -68,11 +68,8 @@ function Home () {
     }
   }
 
-  // Pre-warm backend and listen for auth state changes on mount only
+  // Listen for auth state changes on mount only
   useEffect(() => {
-    // Silently pre-warm the backend gateway on Render
-    api.get('/').catch(() => {})
-
     // 1. Check redirect result (if returning from redirect)
     getRedirectResult(auth)
       .then(async result => {
