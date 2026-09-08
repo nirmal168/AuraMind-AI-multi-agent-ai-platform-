@@ -9,13 +9,9 @@ export default defineConfig({
     port: 5174,
     strictPort: false,
     host: true,
-    hmr: {
-      host: '10.78.27.63',
-      protocol: 'ws'
-    },
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5050',
         changeOrigin: true,
         secure: false
       }

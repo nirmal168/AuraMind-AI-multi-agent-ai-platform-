@@ -2,13 +2,12 @@ import Redis from "ioredis"
 import dotenv from "dotenv"
 import fs from "fs"
 import path from "path"
+import os from "os"
 import { fileURLToPath } from "url"
 
 dotenv.config()
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const CACHE_FILE = path.join(__dirname, ".shared_cache.json")
+const CACHE_FILE = process.env.SHARED_CACHE_FILE || path.resolve(os.tmpdir(), "auramind_shared_cache.json")
 
 class InMemoryStore {
   constructor() {
@@ -119,10 +118,10 @@ let redisClient = null
 try {
   const url = process.env.REDIS_URL || "redis://127.0.0.1:6379"
   redisClient = new Redis(url, {
-    maxRetriesPerRequest: 1,
-    retryStrategy: () => null,
-    connectTimeout: 1500,
-    enableOfflineQueue: false
+    maxRetriesPerRequest: 3,
+    retryStrategy: (times) => Math.min(times * 200, 3000),
+    connectTimeout: 10000,
+    enableOfflineQueue: true
   })
 
   redisClient.on("connect", () => {
@@ -132,6 +131,9 @@ try {
   redisClient.on("error", (err) => {
     // Silent fallback to shared store
   })
+  redisClient.on("close", () => {})
+  redisClient.on("reconnecting", () => {})
+  redisClient.on("end", () => {})
 } catch (err) {
   redisClient = null
 }

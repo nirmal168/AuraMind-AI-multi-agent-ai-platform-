@@ -3,89 +3,137 @@ import { app } from '../config/firebase.js'
 import User from '../models/user.model.js'
 import redis from '../shared/redis/redis.js'
 import crypto from 'crypto'
+import { signToken } from '../utils/jwt.js'
 
 export const login = async (req, res) => {
   try {
-    const { token } = req.body
-    if (!token) {
-      return res.status(400).json({ message: 'Token is required' })
-    }
+    const { token, email, name, avatar } = req.body
 
     let decoded = null
-    if (app) {
-      try {
-        decoded = await getAuth(app).verifyIdToken(token)
-      } catch (authErr) {
-        console.warn('Firebase Admin verifyIdToken fallback:', authErr?.message)
-      }
-    }
 
-    if (!decoded) {
-      try {
-        const parts = token.split('.')
-        if (parts.length === 3) {
-          const payloadJson = Buffer.from(parts[1], 'base64').toString('utf-8')
-          const parsed = JSON.parse(payloadJson)
-          decoded = {
-            uid: parsed.user_id || parsed.sub || parsed.uid,
-            name: parsed.name || (parsed.email ? parsed.email.split('@')[0] : 'User'),
-            email: parsed.email,
-            picture: parsed.picture || parsed.avatar || ''
-          }
+    // 1. Firebase Token verification path
+    if (token) {
+      if (app) {
+        try {
+          decoded = await getAuth(app).verifyIdToken(token)
+        } catch (authErr) {
+          console.warn('Firebase Admin verifyIdToken fallback:', authErr?.message)
         }
-      } catch (jwtErr) {
-        console.error('JWT parse error:', jwtErr?.message)
+      }
+
+      if (!decoded) {
+        try {
+          const parts = token.split('.')
+          if (parts.length === 3) {
+            const payloadJson = Buffer.from(parts[1], 'base64').toString('utf-8')
+            const parsed = JSON.parse(payloadJson)
+            decoded = {
+              uid: parsed.user_id || parsed.sub || parsed.uid,
+              name: parsed.name || (parsed.email ? parsed.email.split('@')[0] : 'User'),
+              email: parsed.email,
+              picture: parsed.picture || parsed.avatar || ''
+            }
+          }
+        } catch (jwtErr) {
+          console.error('JWT parse error:', jwtErr?.message)
+        }
       }
     }
 
-    if (!decoded || !decoded.uid) {
-      return res.status(400).json({ message: 'Invalid authentication token' })
+    // 2. Direct Email / Demo login path
+    if (!decoded && email && typeof email === 'string' && email.trim()) {
+      const cleanEmail = email.trim().toLowerCase()
+      const cleanName = name?.trim() || cleanEmail.split('@')[0] || 'User'
+      decoded = {
+        uid: 'email_' + crypto.createHash('md5').update(cleanEmail).digest('hex'),
+        name: cleanName,
+        email: cleanEmail,
+        picture: avatar || ''
+      }
     }
 
-    let user = await User.findOne({
-      firebaseUid: decoded.uid
-    })
-    if (!user) {
-      user = await User.create({
-        firebaseUid: decoded.uid,
-        name: decoded.name || 'User',
-        email: decoded.email,
-        avatar: decoded.picture || ''
+    if (!decoded || (!decoded.uid && !decoded.email)) {
+      return res.status(400).json({
+        message: 'Valid authentication token or email is required'
       })
     }
 
-    const sessionId = crypto.randomUUID()
-    await redis.set(
-      `user-session-${user._id}`,
-      sessionId,
-      'EX',
-      7 * 24 * 60 * 60
-    )
-    const check = await redis.get( `user-session-${user._id}`)
-    console.log("check session" , check)
-    await redis.set(
-      `session-${sessionId}`,
-      JSON.stringify({
-        _id: user._id,
-        userId: user._id,
-        sessionId,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        plan: user.plan,
-        credits: user.credits,
-        totalCredits: user.totalCredits,
-        planExpiredAt: user.planExpiredAt
-      }),
-      'EX',
-      7 * 24 * 60 * 60
-    )
+    if (decoded) {
+      if ((!decoded.name || decoded.name === 'User') && name) {
+        decoded.name = name
+      }
+      if (!decoded.picture && avatar) {
+        decoded.picture = avatar
+      }
+    }
 
+    // Find or create user in MongoDB
+    let user = null
+    if (decoded.uid) {
+      user = await User.findOne({ firebaseUid: decoded.uid })
+    }
+    if (!user && decoded.email) {
+      user = await User.findOne({ email: decoded.email })
+      if (user && decoded.uid && !user.firebaseUid) {
+        user.firebaseUid = decoded.uid
+        await user.save()
+      }
+    }
+
+    if (!user) {
+      user = await User.create({
+        firebaseUid: decoded.uid || ('usr_' + crypto.randomUUID()),
+        name: decoded.name || 'User',
+        email: decoded.email || `${decoded.uid}@user.auramind.ai`,
+        avatar: decoded.picture || '',
+        credits: 100,
+        totalCredits: 100,
+        plan: 'free'
+      })
+    }
+
+    // Create self-verifying signed session JWT token
+    const sessionPayload = {
+      _id: String(user._id),
+      userId: String(user._id),
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      plan: user.plan || 'free',
+      credits: user.credits ?? 100,
+      totalCredits: user.totalCredits ?? 100,
+      planExpiredAt: user.planExpiredAt
+    }
+
+    const sessionId = signToken(sessionPayload, 30 * 24 * 60 * 60) // 30 days
+
+    // Persist in Redis for rapid state & cache lookup
+    try {
+      await redis.set(
+        `user-session-${user._id}`,
+        sessionId,
+        'EX',
+        30 * 24 * 60 * 60
+      )
+      await redis.set(
+        `session-${sessionId}`,
+        JSON.stringify({
+          ...sessionPayload,
+          sessionId
+        }),
+        'EX',
+        30 * 24 * 60 * 60
+      )
+    } catch (redisErr) {
+      console.warn('Redis session save warning (JWT fallback active):', redisErr?.message)
+    }
+
+    const isProd = process.env.NODE_ENV === 'production'
     res.cookie('session', sessionId, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000
     })
 
     return res.status(200).json({
@@ -93,10 +141,10 @@ export const login = async (req, res) => {
       sessionId
     })
   } catch (error) {
-    console.log(error)
+    console.error('Login error:', error)
     return res
       .status(500)
-      .json({ message: `login failed due to internal server error ${error}` })
+      .json({ message: `login failed due to internal server error ${error?.message || error}` })
   }
 }
 

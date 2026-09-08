@@ -9,7 +9,7 @@ import { proxyWithHeader } from "./utils/proxyWithHeader.js"
 import morgan from "morgan"
 dotenv.config()
 
-const port = process.env.PORT
+const port = process.env.PORT || 5050
 
 const app = express()
 app.use(cors({
@@ -42,13 +42,13 @@ const authProxy = proxy(process.env.AUTH_SERVICE || "http://localhost:5001", {
 app.use("/api/auth", authProxy)
 
 // Public direct binary file downloads (PPTX, PDF)
-app.use("/api/agent/download", proxy(process.env.AGENT_SERVICE, {
+app.use("/api/agent/download", proxy(process.env.AGENT_SERVICE || "http://localhost:5003", {
   proxyReqPathResolver: (req) => `/download${req.url}`
 }))
 
-app.use("/api/chat",protect,proxyWithHeader(process.env.CHAT_SERVICE))
-app.use("/api/agent",protect,proxyWithHeader(process.env.AGENT_SERVICE))
-app.use("/api/billing",protect,proxyWithHeader(process.env.BILLING_SERVICE))
+app.use("/api/chat",protect,proxyWithHeader(process.env.CHAT_SERVICE || "http://localhost:5002"))
+app.use("/api/agent",protect,proxyWithHeader(process.env.AGENT_SERVICE || "http://localhost:5003"))
+app.use("/api/billing",protect,proxyWithHeader(process.env.BILLING_SERVICE || "http://localhost:5004"))
 app.get("/", (req, res) => {
     res.status(200).json({
         status: "OK",
