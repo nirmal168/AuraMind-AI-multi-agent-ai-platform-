@@ -294,7 +294,7 @@ function SideBar () {
           })}
         </div>
 
-        <div className='relative shrink-0 pt-2 border-t border-white/[0.06]'>
+        <div className='relative shrink-0 pt-2 border-t border-white/[0.06] flex flex-col items-center gap-1.5'>
           {userData?.avatar && !imageError ? (
             <img
               className='w-9 h-9 rounded-[10px] object-cover border-2 border-indigo-500/25'
@@ -307,6 +307,20 @@ function SideBar () {
               <User size={15} className='text-slate-400' />
             </div>
           )}
+
+          <button
+            onClick={async () => {
+              await logOut()
+              dispatch(setUserData(null))
+              dispatch(clearConversations())
+              dispatch(setMessages([]))
+              dispatch(setArtifacts([]))
+            }}
+            className='flex items-center justify-center w-8 h-8 rounded-lg border-none bg-transparent text-slate-400 hover:text-red-400 hover:bg-white/[0.06] transition-all cursor-pointer'
+            title='Log Out'
+          >
+            <LogOut size={15} />
+          </button>
         </div>
       </div>
     )
@@ -715,16 +729,12 @@ function SideBar () {
                   </button>
 
                   <button
-                    onClick={() => {
-                      logOut()
+                    onClick={async () => {
+                      await logOut()
                       dispatch(setUserData(null))
                       dispatch(clearConversations())
-                      try {
-                        localStorage.removeItem('auramind_session_id')
-                        localStorage.removeItem('auramind_cached_user')
-                        localStorage.removeItem('auramind_cached_conversations')
-                        localStorage.removeItem('auramind_cached_selected_conversation')
-                      } catch (e) {}
+                      dispatch(setMessages([]))
+                      dispatch(setArtifacts([]))
                     }}
                     className='flex items-center justify-center w-7 h-7 rounded-[7px] border-none bg-transparent text-slate-400 cursor-pointer hover:bg-white/[0.08] hover:text-slate-200 transition-all duration-150'
                     title='Log Out'

@@ -77,7 +77,8 @@ function Home () {
   useEffect(() => {
     if (!auth) return
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user && !userData && !isLoggingInRef.current) {
+      const hasSession = localStorage.getItem('auramind_session_id')
+      if (user && !userData && !isLoggingInRef.current && hasSession) {
         try {
           const token = await user.getIdToken()
           await handleLogin({
