@@ -1,0 +1,10 @@
+﻿{
+  "name": "auramind-ai-platform",
+  "version": "1.0.0",
+  "description": "Multi-Agent AI Platform",
+  "type": "module",
+  "scripts": {
+    "start": "node start.js",
+    "dev": "node start.js"
+  }
+}
