@@ -132,7 +132,11 @@ function Home () {
     setErrorMessage('')
     setLoading(true)
     try {
-      const data = await signInWithPopup(auth, googleProvider)
+      const popupPromise = signInWithPopup(auth, googleProvider)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Google sign-in timed out. If popup was blocked or hidden, please allow popups or use 1-Click Instant Demo.')), 35000)
+      )
+      const data = await Promise.race([popupPromise, timeoutPromise])
       if (data?.user) {
         const token = await data.user.getIdToken()
         await handleLogin({
@@ -157,10 +161,11 @@ function Home () {
       } else if (error.code === 'auth/unauthorized-domain') {
         setErrorMessage('Google Sign-In domain authorization in progress. Please use Email or Quick Demo Sign-In.')
       } else {
-        setErrorMessage(error.message || 'Failed to sign in with Google. Try Email sign-in below.')
+        setErrorMessage(error.message || 'Failed to sign in with Google. Try Email or 1-Click Demo below.')
       }
     } finally {
       setLoading(false)
+      isLoggingInRef.current = false
     }
   }
 
@@ -176,6 +181,8 @@ function Home () {
 
   // 1-Click Quick Demo Sign-in
   const handleQuickDemoLogin = async () => {
+    isLoggingInRef.current = false
+    setLoading(true)
     await handleLogin({
       email: 'nirmal.dev@auramind.ai',
       name: 'Nirmal Prajapat'
@@ -277,7 +284,6 @@ function Home () {
             <button
               type='button'
               onClick={handleQuickDemoLogin}
-              disabled={loading}
               className='w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium text-indigo-300/90 hover:text-indigo-200 bg-indigo-500/10 hover:bg-indigo-500/15 border border-indigo-500/20 hover:border-indigo-500/30 transition-all cursor-pointer'
             >
               <Sparkles size={13} className='text-indigo-400' />
