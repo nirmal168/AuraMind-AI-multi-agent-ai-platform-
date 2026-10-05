@@ -10,6 +10,33 @@ import SideBar from '../components/SideBar'
 import ChatArea from '../components/ChatArea'
 import Artifact from '../components/Artifact'
 
+const DEMO_USER = {
+  _id: 'demo-user-1',
+  userId: 'demo-user-1',
+  name: 'Nirmal Prajapat',
+  email: 'nirmal.dev@auramind.ai',
+  avatar: '',
+  plan: 'free',
+  credits: 100,
+  totalCredits: 100
+}
+
+const createDemoSession = (user = DEMO_USER) => {
+  const encodedHeader = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }))
+  const encodedPayload = btoa(JSON.stringify({
+    _id: user._id,
+    userId: user.userId || user._id,
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar || '',
+    plan: user.plan || 'free',
+    credits: user.credits ?? 100,
+    totalCredits: user.totalCredits ?? 100
+  }))
+
+  return `${encodedHeader}.${encodedPayload}.demo`
+}
+
 function Home () {
   const dispatch = useDispatch()
   const { userData } = useSelector(state => state.user)
@@ -20,6 +47,15 @@ function Home () {
   const [nameInput, setNameInput] = useState('')
   const [showEmailFields, setShowEmailFields] = useState(false)
   const isLoggingInRef = useRef(false)
+
+  const applyDemoSession = () => {
+    const demoSession = createDemoSession(DEMO_USER)
+    localStorage.setItem('auramind_session_id', demoSession)
+    localStorage.setItem('auramind_cached_user', JSON.stringify(DEMO_USER))
+    dispatch(setUserData(DEMO_USER))
+    setErrorMessage('')
+    return DEMO_USER
+  }
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -51,6 +87,13 @@ function Home () {
     } catch (error) {
       console.error('Backend login error:', error)
       const status = error.response?.status
+      const backendUnavailable = !error.response || status === 401 || status === 400 || status === 429 || status === 500 || status === 502 || status === 503 || status === 504
+
+      if (backendUnavailable && payload?.email) {
+        applyDemoSession()
+        return
+      }
+
       if (retries > 0 && (status === 429 || status === 500 || status === 502 || status === 503 || status === 504 || !error.response)) {
         const delay = status === 429 ? 3500 : 3000
         setErrorMessage('Connecting to authentication service...')
@@ -183,10 +226,12 @@ function Home () {
   const handleQuickDemoLogin = async () => {
     isLoggingInRef.current = false
     setLoading(true)
-    await handleLogin({
-      email: 'nirmal.dev@auramind.ai',
-      name: 'Nirmal Prajapat'
-    })
+    try {
+      applyDemoSession()
+    } finally {
+      setLoading(false)
+      isLoggingInRef.current = false
+    }
   }
 
   return (

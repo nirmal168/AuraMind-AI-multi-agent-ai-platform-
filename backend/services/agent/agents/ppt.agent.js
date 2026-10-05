@@ -70,7 +70,7 @@ Respond with ONLY valid JSON:
 
     try {
       const { filename } = await generatePPt(data)
-      const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:5000'
+      const gatewayUrl = process.env.GATEWAY_URL || process.env.FRONTEND_URL || 'http://localhost:5050'
       downloadUrl = `${gatewayUrl}/api/agent/download/${filename}`
     } catch (pptErr) {
       console.warn('PPT file generation failed:', pptErr?.message)

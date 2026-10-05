@@ -51,11 +51,15 @@ export const visionAgent = async state => {
     let enhancedPrompt = cleanedPrompt
     let realPersonName = ''
 
+    const isExplicitPersonRequest = /\b(person|people|portrait|portrait of|celebrity|athlete|leader|actor|actress|model|man|woman|girl|boy|face|selfie|photo of|picture of)\b/i.test(cleanedPrompt)
+      || /\b(\w+\s+){0,3}\w+\s+(of|for)\s+(?:a\s+)?(?:real\s+)?(?:person|man|woman|girl|boy|celebrity|athlete|actor|actress)\b/i.test(cleanedPrompt)
+      || /\b\w+\s+\w+\s+(?:portrait|photo|image|picture)\b/i.test(cleanedPrompt)
+
     try {
       const res = await llm.invoke(`
 You are the Qwen Image Engine Prompt Architect.
 Convert the user request into an ultra-high-quality image generation prompt.
-Also extract the famous celebrity/athlete/person's name if mentioned.
+Only extract a famous celebrity/athlete/person name when the user clearly asks for a real person.
 
 User Request: "${cleanedPrompt}"
 
@@ -63,8 +67,9 @@ Rules:
 1. Complete Subject Visibility:
    - Ensure the entire subject is completely in frame (wide angle, full view, zero extreme close-up or accidental cropping).
    - For flags & national symbols: Specify the complete rectangular horizontal flag fully in frame with all exact official colors (e.g. for Indian flag: three equal horizontal bands with deep saffron top, crisp pure white middle with navy blue 24-spoke Ashoka Chakra centered, and rich green bottom), commercial studio lighting, clean background, 8k resolution.
-2. Celebrities & Public Figures:
-   - Extract their full canonical name.
+2. Real Persons Only:
+   - Only return a famousPersonName if the user clearly requests a real person or celebrity portrait.
+   - If the prompt is about objects, backgrounds, scenes, products, concepts, or generic compositions, return "NONE".
 3. 3D Cartoon / Nano Banana:
    - 3D cartoon mini character in Pixar style, glossy textures, expressive face, 8k Octane render.
 4. Keep prompt clear, detailed, and non-abstract (30-50 words).
@@ -101,7 +106,10 @@ Respond with ONLY valid JSON:
     }
 
     let officialPhotoUrl = null
-    if (realPersonName && !isNanoBanana && !isAnime) {
+    const explicitPersonNameInPrompt = realPersonName && cleanedPrompt.toLowerCase().includes(realPersonName.toLowerCase())
+    const shouldUseOfficialPhoto = Boolean(realPersonName && explicitPersonNameInPrompt && isExplicitPersonRequest && !isNanoBanana && !isAnime)
+
+    if (shouldUseOfficialPhoto) {
       officialPhotoUrl = await findOfficialPhoto(realPersonName)
     }
 

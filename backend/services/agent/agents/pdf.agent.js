@@ -62,7 +62,7 @@ Topic: ${state.prompt}`
 
     try {
       const { filename } = await generatePdf(data)
-      const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:5000'
+      const gatewayUrl = process.env.GATEWAY_URL || process.env.FRONTEND_URL || 'http://localhost:5050'
       downloadUrl = `${gatewayUrl}/api/agent/download/${filename}`
     } catch (pdfErr) {
       console.warn("PDF generation failed:", pdfErr?.message)

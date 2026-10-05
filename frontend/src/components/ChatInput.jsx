@@ -230,13 +230,15 @@ function ChatInput ({
     }
   ]
 
-  const handleSendMessage = async () => {
-    const userPrompt = value.trim()
+  const sendPrompt = async (promptOverride, agentOverride) => {
+    const userPrompt = (promptOverride ?? value).trim()
 
     if ((!userPrompt && !selectedFile && !folderData) || loading) return
 
     setLoading(true)
     setValue('')
+
+    const activeAgent = agentOverride || selectedAgent
 
     const effectivePrompt = userPrompt || (selectedFile ? `Please explain the attached ${selectedFile.name} in detail.` : 'Please explain this project.')
 
@@ -285,14 +287,14 @@ function ChatInput ({
         const formData = new FormData()
         formData.append('prompt', finalPayloadPrompt)
         formData.append('conversationId', conversation._id)
-        formData.append('agent', selectedFile?.type === 'application/pdf' ? 'pdfRag' : selectedAgent)
+        formData.append('agent', selectedFile?.type === 'application/pdf' ? 'pdfRag' : activeAgent)
         formData.append('file', selectedFile)
         data = await sendMessage(formData)
       } else {
         data = await sendMessage({
           prompt: finalPayloadPrompt,
           conversationId: conversation._id,
-          agent: selectedAgent
+          agent: activeAgent
         })
       }
 
@@ -327,6 +329,32 @@ function ChatInput ({
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const handlePrompt = event => {
+      const { prompt, agent } = event.detail || {}
+      if (!prompt) return
+      if (agent) setSelectedAgent(agent)
+      sendPrompt(prompt, agent)
+    }
+
+    const handleImagePrompt = event => {
+      const prompt = event.detail?.prompt
+      if (!prompt) return
+
+      setSelectedAgent('vision')
+      sendPrompt(prompt, 'vision')
+    }
+
+    window.addEventListener('auramind-prompt', handlePrompt)
+    window.addEventListener('auramind-image-prompt', handleImagePrompt)
+    return () => {
+      window.removeEventListener('auramind-prompt', handlePrompt)
+      window.removeEventListener('auramind-image-prompt', handleImagePrompt)
+    }
+  }, [loading, selectedFile, folderData, selectedAgent, selectedConversation])
+
+  const handleSendMessage = () => sendPrompt(value)
 
   return (
     <div className='w-full shrink-0 px-3 md:px-5 py-3 md:py-4 border-t border-white/[0.06] bg-[#0d0f14] select-none'>

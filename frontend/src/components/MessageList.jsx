@@ -89,37 +89,83 @@ function MessageList ({ loading }) {
   return (
     <div className='flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-6 space-y-5 custom-scrollbar select-text'>
       {messages.length === 0 || !selectedConversation ? (
-        <div className='h-full flex flex-col items-center justify-center gap-5 text-center px-4 py-8 max-w-xl mx-auto'>
-          <div className='flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 shadow-lg shadow-indigo-500/10'>
-            <Sparkles className='text-indigo-400' size={24} />
+        <div className='h-full flex flex-col items-center justify-center px-4 py-8 max-w-2xl mx-auto select-none'>
+          {/* Brand Icon & Welcome */}
+          <div className='flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-pink-500/10 border border-indigo-500/25 shadow-xl shadow-indigo-500/10 mb-4'>
+            <Sparkles className='text-indigo-400' size={28} />
           </div>
 
-          <div className='flex flex-col gap-1.5'>
-            <h1 className='text-[22px] font-bold text-slate-100 tracking-tight'>
-              Welcome to AuraMind AI
-            </h1>
-            <p className='text-[15px] font-semibold text-indigo-400/90 tracking-tight'>
-              How can I help you today?
-            </p>
-            <p className='text-[13px] text-slate-400 max-w-[320px] leading-relaxed mx-auto'>
-              Ask me anything — code generation, system architecture, explanations, or creative ideas.
-            </p>
-          </div>
+          <h1 className='text-2xl md:text-3xl font-bold text-slate-100 tracking-tight text-center'>
+            Welcome to AuraMind AI
+          </h1>
+          <p className='text-sm md:text-base font-medium text-indigo-400/90 mt-1.5 text-center'>
+            Multi-Agent Intelligence at your fingertips
+          </p>
+          <p className='text-xs md:text-sm text-slate-400 text-center max-w-md mt-2 leading-relaxed'>
+            Ask questions, generate presentations, write & debug code, analyze documents, or create images with specialized AI agents.
+          </p>
 
-          <div className='grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full mt-2'>
+          {/* Quick-Start Cards */}
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mt-8'>
             {[
-              { text: 'Write a Netflix clone', icon: Code },
-              { text: 'Explain Redis', icon: Cpu },
-              { text: 'Build a dashboard', icon: Layout }
-            ].map((s, idx) => {
-              const Icon = s.icon
+              {
+                title: 'Full-Stack Code',
+                desc: 'Build a responsive React & Tailwind dashboard with analytics',
+                agent: 'coding',
+                prompt: 'Write a modern, responsive React & Tailwind analytics dashboard with charts and dark mode.',
+                icon: Code,
+                color: 'text-blue-400'
+              },
+              {
+                title: 'Generate Pitch Deck',
+                desc: 'Create an engaging 5-slide presentation on Autonomous AI Agents',
+                agent: 'ppt',
+                prompt: 'Create a professional 5-slide presentation deck on Autonomous AI Agents and their business applications.',
+                icon: Layout,
+                color: 'text-violet-400'
+              },
+              {
+                title: 'Image Generation',
+                desc: 'Futuristic cyberpunk cityscape with glowing neon reflections',
+                agent: 'vision',
+                prompt: 'Futuristic cyberpunk aesthetic with glowing neon lights, holographic reflections, detailed sci-fi cityscape',
+                icon: Sparkles,
+                color: 'text-pink-400'
+              },
+              {
+                title: 'Web & Deep Research',
+                desc: 'Find the latest breakthroughs in multi-agent orchestration',
+                agent: 'search',
+                prompt: 'What are the latest breakthroughs and architectural patterns in multi-agent AI orchestration in 2026?',
+                icon: Cpu,
+                color: 'text-emerald-400'
+              }
+            ].map((card, idx) => {
+              const Icon = card.icon
               return (
                 <button
                   key={idx}
-                  className='flex flex-col sm:flex-row items-center justify-center gap-2 text-[12px] font-medium text-slate-300 bg-white/[0.03] border border-white/[0.07] px-3.5 py-3 rounded-xl hover:bg-white/[0.07] hover:text-white hover:border-indigo-500/30 transition-all duration-150 cursor-pointer text-center'
+                  type='button'
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent('auramind-prompt', {
+                        detail: { prompt: card.prompt, agent: card.agent }
+                      })
+                    )
+                  }}
+                  className='flex items-start gap-3.5 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.07] hover:border-indigo-500/40 hover:bg-white/[0.06] hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-200 text-left cursor-pointer group'
                 >
-                  <Icon size={14} className='text-indigo-400 shrink-0' />
-                  <span>{s.text}</span>
+                  <div className='p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] group-hover:scale-105 transition-transform shrink-0'>
+                    <Icon size={18} className={card.color} />
+                  </div>
+                  <div className='flex flex-col min-w-0'>
+                    <span className='text-[13px] font-semibold text-slate-200 group-hover:text-white transition-colors'>
+                      {card.title}
+                    </span>
+                    <span className='text-[11.5px] text-slate-400 leading-snug line-clamp-2 mt-0.5'>
+                      {card.desc}
+                    </span>
+                  </div>
                 </button>
               )
             })}
